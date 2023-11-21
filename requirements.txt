@@ -1,3 +1,3 @@
-pip install pandas
-pip install openpyxl
-pip install Flask
+Flask==2.0.1
+pymongo==4.0.1
+
