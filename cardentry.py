@@ -13,3 +13,4 @@ response = requests.post(url, json=tarot_card_data)
 
 print(response.status_code)
 print(response.json())
+
