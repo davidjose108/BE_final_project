@@ -36,18 +36,6 @@ def get_card_by_number(card_number):
     return jsonify({"tarot_card": tarot_card})
 
 
-# GET a random card
-@app.route("/pick", methods=["GET"])
-def get_random_tarot_card():
-    random_card = collection.aggregate([{"$sample": {"size": 1}}])
-    if random_card.alive:
-        card = list(random_card)[0]
-        card.pop("_id", None)
-        return jsonify({"tarot_card": card})
-    else:
-        return jsonify({"error": "No tarot cards found"}), 404
-
-
 # GET the list of all cards (documents)
 @app.route("/allcards", methods=["GET"])
 def get_all_tarot_cards():
@@ -58,29 +46,24 @@ def get_all_tarot_cards():
 # DELETE a card
 @app.route("/delete_tarot_card", methods=["DELETE"])
 def delete_tarot_card():
-    card_name = request.args.get("name")
-    result = collection.delete_one({"name": card_name})
-    return jsonify({"message": f"Tarot card {card_name} deleted successfully"})
+    card_number = request.args.get("number")
+    card_number = int(card_number)
+    result = collection.delete_one({"number": card_number})
+    return jsonify(
+        {"message": f"Tarot card with number {card_number} deleted successfully"}
+    )
 
 
-@app.route("/my_birth_card/<name>", methods=["PUT"])
-def set_birth_card(name):
-    # We want to first check the value of the card to know if it is true or false
-    tarot_card = collection.find_one({"name": name})
-
-    if tarot_card:
-        current_value = tarot_card.get("is_birth_card", False)
-
-        # Update the field to the opposite
-        result = collection.update_one(
-            {"name": name}, {"$set": {"is_birth_card": not current_value}}
-        )
-        return jsonify({"message": f"Tarot card {name} updated"})
-    else:
-        return jsonify({"error": f"Failed to update tarot card {name}"}), 500
+# GET a random card
+@app.route("/pick", methods=["GET"])
+def get_random_tarot_card():
+    random_card = collection.aggregate([{"$sample": {"size": 1}}])
+    card = list(random_card)[0]
+    card.pop("_id", None)
+    return jsonify({"tarot_card": card})
 
 
-@app.route("/my_birth_card", methods=["POST"])
+@app.route("/my_birth_card/", methods=["POST"])
 def get_birth_card():
     try:
         # Get the birthdate from the request JSON
@@ -99,6 +82,23 @@ def get_birth_card():
             return jsonify({"tarot_card": tarot_card})
     except ValueError:
         return jsonify({"error": "Invalid date format"}), 400
+
+
+@app.route("/my_birth_card/<int:number>", methods=["PUT"])
+def set_birth_card(number):
+    # We want to first check the value of the card to know if it is true or false
+    tarot_card = collection.find_one({"number": number})
+
+    if tarot_card:
+        current_value = tarot_card.get("is_birth_card", False)
+
+        # Update the field to the opposite
+        result = collection.update_one(
+            {"number": number}, {"$set": {"is_birth_card": not current_value}}
+        )
+        return jsonify({"message": f"Tarot card {number} updated"})
+    else:
+        return jsonify({"error": f"Failed to update tarot card {number}"}), 500
 
 
 if __name__ == "__main__":
